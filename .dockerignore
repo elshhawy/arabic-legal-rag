@@ -1,9 +1,11 @@
+﻿.venv/
 __pycache__/
 *.egg-info/
 .pytest_cache/
 .coverage
 htmlcov/
-data/
-spot_check_report.txt
-repomix-output.xml
-.venv/
+data/raw/
+reports/
+tests/
+*.md
+.git/
