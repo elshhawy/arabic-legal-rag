@@ -7,3 +7,4 @@ data/
 spot_check_report.txt
 repomix-output.xml
 .venv/
+.env
