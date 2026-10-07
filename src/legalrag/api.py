@@ -1,18 +1,53 @@
 import logging
+import time
+import uuid
 
 import chromadb
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 
 from legalrag.embeddings import MODEL_NAME, search
 from legalrag.llm import LLMError, generate_answer
+from legalrag.logging_config import configure_logging, request_id_var
 
+configure_logging()
 logger = logging.getLogger(__name__)
 
 INDEX_PATH = "data/chroma_index"
 COLLECTION_NAME = "civil_code_articles"
 
 app = FastAPI(title="Arabic Legal RAG")
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    request_id = uuid.uuid4().hex[:12]
+    request_id_var.set(request_id)
+    start = time.perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception:
+        logger.exception(
+            "request_failed",
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "status": 500,
+                "latency_ms": round((time.perf_counter() - start) * 1000, 1),
+            },
+        )
+        raise
+    response.headers["X-Request-ID"] = request_id
+    logger.info(
+        "request_completed",
+        extra={
+            "method": request.method,
+            "path": request.url.path,
+            "status": response.status_code,
+            "latency_ms": round((time.perf_counter() - start) * 1000, 1),
+        },
+    )
+    return response
 
 _client = chromadb.PersistentClient(path=INDEX_PATH)
 _collection = _client.get_collection(COLLECTION_NAME)
@@ -24,7 +59,7 @@ _stored_model = _collection.metadata.get("embedding_model")
 if _stored_model != MODEL_NAME:
     raise RuntimeError(
         f"Index was built with '{_stored_model}' but this process uses "
-        f"'{MODEL_NAME}'. Rebuild the index: python build_index.py"
+        f"'{MODEL_NAME}'. Rebuild the index: python scripts/build_index.py"
     )
 
 
@@ -50,7 +85,9 @@ def health():
 
 @app.post("/ask", response_model=AskResponse)
 def ask(request: AskRequest):
+    t0 = time.perf_counter()
     results = search(_collection, request.question, k=3)
+    retrieval_ms = round((time.perf_counter() - t0) * 1000, 1)
     sources = [
         Source(
             article_number=r["metadata"]["article_number"],
@@ -59,6 +96,7 @@ def ask(request: AskRequest):
         )
         for r in results
     ]
+    t1 = time.perf_counter()
     try:
         answer = generate_answer(request.question, results)
     except LLMError as exc:
@@ -67,4 +105,13 @@ def ask(request: AskRequest):
             status_code=503,
             detail="Answer generation is temporarily unavailable.",
         ) from exc
+    logger.info(
+        "ask_completed",
+        extra={
+            "question_chars": len(request.question),
+            "retrieved_articles": [s.article_number for s in sources],
+            "retrieval_ms": retrieval_ms,
+            "llm_ms": round((time.perf_counter() - t1) * 1000, 1),
+        },
+    )
     return AskResponse(answer=answer, sources=sources)
