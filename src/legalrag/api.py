@@ -1,8 +1,13 @@
+import logging
+
 import chromadb
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from legalrag.embeddings import MODEL_NAME, search
+from legalrag.llm import LLMError, generate_answer
+
+logger = logging.getLogger(__name__)
 
 INDEX_PATH = "data/chroma_index"
 COLLECTION_NAME = "civil_code_articles"
@@ -54,6 +59,12 @@ def ask(request: AskRequest):
         )
         for r in results
     ]
-    # Placeholder answer for now -- the LLM step comes next.
-    answer = f"Found {len(sources)} relevant articles."
+    try:
+        answer = generate_answer(request.question, results)
+    except LLMError as exc:
+        logger.error("LLM generation failed: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail="Answer generation is temporarily unavailable.",
+        ) from exc
     return AskResponse(answer=answer, sources=sources)
