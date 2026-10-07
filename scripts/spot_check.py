@@ -1,7 +1,7 @@
 """Print 20 random articles so you can check them by eye.
 
-Put this file anywhere inside the project (project root is best) and run:
-    python spot_check.py
+Run it from the project root:
+    python scripts/spot_check.py
 
 It finds data/processed/civil_code.json by itself, prints the articles, and
 also saves them to spot_check_report.txt (open that file in VS Code: Arabic

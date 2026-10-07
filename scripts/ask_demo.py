@@ -1,5 +1,5 @@
 """Quick manual test for the /ask endpoint. Run with the server already up:
-    python test_ask.py
+    python scripts/ask_demo.py
 """
 
 import requests

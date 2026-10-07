@@ -1,7 +1,7 @@
 """Build the vector index once from the extracted articles.
 
 Run it whenever civil_code.json changes:
-    python build_index.py
+    python scripts/build_index.py
 """
 
 import json
