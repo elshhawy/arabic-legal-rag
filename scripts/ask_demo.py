@@ -13,5 +13,4 @@ data = response.json()
 print("Status:", response.status_code)
 print("Answer:", data["answer"])
 for source in data["sources"]:
-    print(f"\n- Article {source['article_number']} ({source['citation']})")
-    print(" ", source["text"][:150])
+    print("-", source)

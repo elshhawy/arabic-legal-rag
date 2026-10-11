@@ -33,10 +33,13 @@ def client(api_module, monkeypatch):
     return TestClient(api_module.app)
 
 
-def test_health_ok_and_has_request_id(client):
+def test_health_reports_status_and_document_count(client):
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    body = response.json()
+    assert body["status"] == "healthy"
+    assert isinstance(body["documents_indexed"], int)
+    assert body["documents_indexed"] > 0
     assert len(response.headers["X-Request-ID"]) == 12
 
 
@@ -45,13 +48,7 @@ def test_ask_returns_expected_schema(client):
     assert response.status_code == 200
     body = response.json()
     assert body["answer"] == "fake answer"
-    assert body["sources"] == [
-        {
-            "article_number": 147,
-            "citation": "Egyptian Civil Code, Article 147",
-            "text": "fake article text",
-        }
-    ]
+    assert body["sources"] == ["Egyptian Civil Code, Article 147"]
 
 
 def test_ask_missing_question_is_422(client):
@@ -60,6 +57,11 @@ def test_ask_missing_question_is_422(client):
 
 def test_ask_wrong_type_is_422(client):
     assert client.post("/ask", json={"question": 123}).status_code == 422
+
+
+def test_ask_empty_question_is_422(client):
+    assert client.post("/ask", json={"question": ""}).status_code == 422
+    assert client.post("/ask", json={"question": "   "}).status_code == 422
 
 
 def test_ask_llm_failure_is_503_without_leaking_details(api_module, client, monkeypatch):

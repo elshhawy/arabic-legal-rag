@@ -1,10 +1,10 @@
-import logging
+﻿import logging
 import time
 import uuid
 
 import chromadb
 from fastapi import FastAPI, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from legalrag.embeddings import MODEL_NAME, search
 from legalrag.llm import LLMError, generate_answer
@@ -64,23 +64,20 @@ if _stored_model != MODEL_NAME:
 
 
 class AskRequest(BaseModel):
-    question: str
-
-
-class Source(BaseModel):
-    article_number: int
-    citation: str
-    text: str
+    # Strip whitespace first, then require at least 1 character,
+    # so "" and "   " both return 422.
+    model_config = ConfigDict(str_strip_whitespace=True)
+    question: str = Field(min_length=1)
 
 
 class AskResponse(BaseModel):
     answer: str
-    sources: list[Source]
+    sources: list[str]  # article citations, e.g. "Egyptian Civil Code, Article 147"
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "healthy", "documents_indexed": _collection.count()}
 
 
 @app.post("/ask", response_model=AskResponse)
@@ -88,14 +85,7 @@ def ask(request: AskRequest):
     t0 = time.perf_counter()
     results = search(_collection, request.question, k=3)
     retrieval_ms = round((time.perf_counter() - t0) * 1000, 1)
-    sources = [
-        Source(
-            article_number=r["metadata"]["article_number"],
-            citation=r["metadata"]["citation"],
-            text=r["text"],
-        )
-        for r in results
-    ]
+    sources = [r["metadata"]["citation"] for r in results]
     t1 = time.perf_counter()
     try:
         answer = generate_answer(request.question, results)
@@ -109,7 +99,7 @@ def ask(request: AskRequest):
         "ask_completed",
         extra={
             "question_chars": len(request.question),
-            "retrieved_articles": [s.article_number for s in sources],
+            "retrieved_articles": [r["metadata"]["article_number"] for r in results],
             "retrieval_ms": retrieval_ms,
             "llm_ms": round((time.perf_counter() - t1) * 1000, 1),
         },
