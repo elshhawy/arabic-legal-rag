@@ -23,9 +23,11 @@ def main():
     client = chromadb.PersistentClient(path=str(INDEX_PATH))
 
     # Drop any old collection so a rerun always reflects the current data.
+    # On the very first run there is nothing to delete, so errors are ignored.
+    # TODO: catch Chroma's specific "not found" exception instead of Exception.
     try:
         client.delete_collection(COLLECTION_NAME)
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass
 
     # The model name is stored as collection metadata -- this is the fix

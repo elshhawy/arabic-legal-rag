@@ -1,4 +1,4 @@
-from legalrag.embeddings import embed_query, embed_passages
+from legalrag.embeddings import embed_query
 
 vec = embed_query("هل يجوز فسخ العقد؟")
 print("Shape:", vec.shape)

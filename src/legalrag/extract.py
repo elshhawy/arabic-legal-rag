@@ -33,10 +33,10 @@ REPEAL_RANGE = re.compile(r"Articles?\s+(\d+)\s*(?:-|to)\s*(\d+)", re.IGNORECASE
 NUMBERED_TOPIC = re.compile(r"^\d+\s*[.\-\u2013]\s*(.+)$")  # "1. Individuals"
 ROMAN = r"[IVXLC]+"
 LEVEL_PATTERNS = [
-    ("part", re.compile(r"^(FIRST|SECOND|THIRD|FOURTH)\s+PART$", re.I)),
-    ("book", re.compile(rf"^BOOK\s+({ROMAN})$", re.I)),
-    ("chapter", re.compile(rf"^CHAPTER\s+({ROMAN})$", re.I)),
-    ("section", re.compile(rf"^SECTION\s+({ROMAN})$", re.I)),
+    ("part", re.compile(r"^(FIRST|SECOND|THIRD|FOURTH)\s+PART$", re.IGNORECASE)),
+    ("book", re.compile(rf"^BOOK\s+({ROMAN})$", re.IGNORECASE)),
+    ("chapter", re.compile(rf"^CHAPTER\s+({ROMAN})$", re.IGNORECASE)),
+    ("section", re.compile(rf"^SECTION\s+({ROMAN})$", re.IGNORECASE)),
 ]
 LEVELS = ["part", "book", "chapter", "section", "topic"]
 # Words a heading title is still allowed to contain in lowercase, e.g.
