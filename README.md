@@ -140,7 +140,7 @@ API tests are skipped automatically if `data/chroma_index` does not exist.
 ## Changelog
 
 ### Session 1 — Foundation
-- **Built:** PDF extraction to structured JSON (1149 articles, 54 flagged repealed),
+- **Built:** PDF extraction to structured JSON (1149 articles, 56 flagged repealed),
   corpus validation (7 checks), article-level embeddings in Chroma, `/ask` and
   `/health`, structured logging, Dockerfile and compose file, unit tests.
 - **Decisions:** one article = one chunk; e5-small multilingual embeddings; Gemini
