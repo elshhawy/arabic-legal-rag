@@ -88,8 +88,10 @@ uvicorn legalrag.api:app --port 8000
 
 ### `GET /health`
 ```json
-{"status": "ok"}
+{"status": "healthy", "documents_indexed": 1093}
 ```
+`documents_indexed` is the number of non-repealed articles in the vector index
+(1149 articles - 56 repealed = 1093, as measured from the running container).
 
 ### `POST /ask`
 Request:
@@ -101,15 +103,13 @@ Response:
 {
   "answer": "...",
   "sources": [
-    {
-      "article_number": 157,
-      "citation": "Egyptian Civil Code, Article 157",
-      "text": "..."
-    }
+    "Egyptian Civil Code, Article 157",
+    "Egyptian Civil Code, Article 650"
   ]
 }
 ```
-Errors: `422` for an invalid body; `503` if answer generation fails (no internal
+Errors: `422` for an invalid body (missing or non-string `question`, or an empty /
+whitespace-only question); `503` if answer generation fails (no internal
 details are returned).
 
 ## Tests
@@ -134,6 +134,8 @@ API tests are skipped automatically if `data/chroma_index` does not exist.
   Git (DVC planned for Session 2).
 - **No retrieval-quality or latency measurements yet.** RAGAS: not measured yet.
   Latency/throughput: not measured yet.
+- Docker rebuilds reinstall all dependencies whenever `src/` changes (the dependency
+  layer is not cached separately); to be addressed with the CI image build.
 - Importing `legalrag.embeddings` loads `sentence-transformers` eagerly, which makes
   some tests slow (measured: ~14 s for 2 tests).
 
