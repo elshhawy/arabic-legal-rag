@@ -130,7 +130,7 @@ API tests are skipped automatically if `data/chroma_index` does not exist.
   from retrieval, so the system cannot yet explain that an article was repealed.
 - **Source PDF typos remain.** Scattered Arabic typos in the PDF are left as-is
   (only one verified typo was corrected); see `reports/extraction_report.json`.
-- **Not reproducible from a fresh clone yet:** the PDF, corpus and index are not in
+- **Not reproducible from a fresh clone yet:** the corpus JSON is committed, but the source PDF and the Chroma index are not in
   Git (DVC planned for Session 2).
 - **No retrieval-quality or latency measurements yet.** RAGAS: not measured yet.
   Latency/throughput: not measured yet.
