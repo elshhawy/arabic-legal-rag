@@ -1,0 +1,9 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    # Secrets are injected at RUN time from the local .env file.
+    # They are never copied into the image.
+    env_file:
+      - .env
