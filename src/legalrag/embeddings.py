@@ -63,3 +63,15 @@ def search(collection, question, k=3):
             results["metadatas"][0], results["documents"][0], results["distances"][0]
         )
     ]
+
+
+
+def token_offsets(text):
+    """One (start_char, end_char) pair per model token of `text`.
+
+    Special tokens are excluded. Used by chunking to cut the ORIGINAL text on
+    token boundaries, so every chunk is a verbatim slice of the article.
+    """
+    tokenizer = _get_model().tokenizer
+    encoded = tokenizer(text, add_special_tokens=False, return_offsets_mapping=True)
+    return [tuple(pair) for pair in encoded["offset_mapping"]]
