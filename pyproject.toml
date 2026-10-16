@@ -15,7 +15,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "ruff", "dvc[gdrive]>=3.67,<4"]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "dvc[gdrive]>=3.67,<4",
+    "pyOpenSSL==24.2.1",
+    "cryptography>=42,<44",
+]
 
 [build-system]
 requires = ["setuptools>=68"]
