@@ -24,3 +24,14 @@ stages:
       hash: md5
       md5: 20a77cad6b37238c3a9ebeef92203631
       size: 1043
+  validate:
+    cmd: python -m legalrag.validate
+    deps:
+    - path: data/processed/civil_code.json
+      hash: md5
+      md5: c33afd5d10f67a529ec1ee51fbde3b2a
+      size: 1366941
+    - path: src/legalrag/validate.py
+      hash: md5
+      md5: abd2cacb3feeaca21eca5b68f09ecf46
+      size: 5036

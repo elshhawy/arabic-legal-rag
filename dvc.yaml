@@ -9,3 +9,8 @@ stages:
     - data/processed/civil_code.json
     - reports/extraction_report.json:
         cache: false
+  validate:
+    cmd: python -m legalrag.validate
+    deps:
+    - data/processed/civil_code.json
+    - src/legalrag/validate.py
