@@ -409,7 +409,10 @@ def main():
 
     for path, payload in ((OUTPUT_PATH, articles), (REPORT_PATH, report)):
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        # newline="\n" keeps output byte-identical on Windows and Linux,
+        # so DVC hashes match everywhere (the repo uses LF via .gitattributes).
+        with path.open("w", encoding="utf-8", newline="\n") as f:
+            f.write(json.dumps(payload, ensure_ascii=False, indent=2))
 
     print("Total articles:", report["articles_total"])
     print("Repealed:", len(report["repealed"]))

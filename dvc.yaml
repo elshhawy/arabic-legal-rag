@@ -1,0 +1,11 @@
+stages:
+  extract:
+    cmd: python -m legalrag.extract
+    deps:
+    - data/egyptian_civil_code.pdf
+    - src/legalrag/arabic.py
+    - src/legalrag/extract.py
+    outs:
+    - data/processed/civil_code.json
+    - reports/extraction_report.json:
+        cache: false

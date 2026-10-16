@@ -1,0 +1,26 @@
+schema: '2.0'
+stages:
+  extract:
+    cmd: python -m legalrag.extract
+    deps:
+    - path: data/egyptian_civil_code.pdf
+      hash: md5
+      md5: 5086ef5f16f15d856278db943e58e948
+      size: 2599703
+    - path: src/legalrag/arabic.py
+      hash: md5
+      md5: 77d393f2e093be8974969fe4f25c95af
+      size: 1652
+    - path: src/legalrag/extract.py
+      hash: md5
+      md5: 69ad6626eaa2eed41a706d97b3711769
+      size: 16867
+    outs:
+    - path: data/processed/civil_code.json
+      hash: md5
+      md5: c33afd5d10f67a529ec1ee51fbde3b2a
+      size: 1366941
+    - path: reports/extraction_report.json
+      hash: md5
+      md5: 20a77cad6b37238c3a9ebeef92203631
+      size: 1043
