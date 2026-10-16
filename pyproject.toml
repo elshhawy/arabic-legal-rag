@@ -12,6 +12,7 @@ dependencies = [
     "requests",
     "google-genai",
     "python-dotenv",
+    "pyyaml",
 ]
 
 [project.optional-dependencies]
