@@ -6,7 +6,7 @@ import chromadb
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from legalrag.embeddings import MODEL_NAME, search
+from legalrag.embeddings import MODEL_NAME, count_articles, search
 from legalrag.llm import LLMError, generate_answer
 from legalrag.logging_config import configure_logging, request_id_var
 
@@ -63,6 +63,9 @@ if _stored_model != MODEL_NAME:
     )
 
 
+_article_count = count_articles(_collection)
+
+
 class AskRequest(BaseModel):
     # Strip whitespace first, then require at least 1 character,
     # so "" and "   " both return 422.
@@ -77,7 +80,7 @@ class AskResponse(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "healthy", "documents_indexed": _collection.count()}
+    return {"status": "healthy", "documents_indexed": _article_count}
 
 
 @app.post("/ask", response_model=AskResponse)
