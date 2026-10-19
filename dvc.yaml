@@ -14,3 +14,15 @@ stages:
     deps:
     - data/processed/civil_code.json
     - src/legalrag/validate.py
+  index:
+    cmd: python scripts/build_index.py
+    deps:
+    - data/processed/civil_code.json
+    - scripts/build_index.py
+    - src/legalrag/chunking.py
+    - src/legalrag/embeddings.py
+    params:
+    - index.chunk_size
+    - index.overlap
+    outs:
+    - data/chroma_index
