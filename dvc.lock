@@ -13,8 +13,8 @@ stages:
       size: 1652
     - path: src/legalrag/extract.py
       hash: md5
-      md5: 69ad6626eaa2eed41a706d97b3711769
-      size: 16867
+      md5: ec312548d57662a7112fa77f7e649933
+      size: 16893
     outs:
     - path: data/processed/civil_code.json
       hash: md5

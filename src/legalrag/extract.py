@@ -7,6 +7,7 @@ continues on the next page is completed automatically.
 
 import json
 import re
+from itertools import pairwise
 from pathlib import Path
 
 import pdfplumber
@@ -171,7 +172,7 @@ def row_bands(page):
     for y in ys:
         if not merged or y - merged[-1] > 2.5:
             merged.append(y)
-    return list(zip(merged, merged[1:]))
+    return list(pairwise(merged))
 
 
 def read_side(page, x0, x1, top, bottom):
@@ -399,11 +400,11 @@ def main():
         "without_arabic": [a["article_number"] for a in articles if not a["text_ar"]],
         "manual_repairs": ["1022: Arabic moved out of the 1021 cell"] if repaired_1022 else [],
         "known_source_issues": [
-            "The source PDF itself contains scattered Arabic typos (e.g. "
+            ("The source PDF itself contains scattered Arabic typos (e.g. "
             "'يكبت' for 'يثبت', 'كير' for 'غير', 'يترل' for 'ينزل') found "
             "during a 20-article random spot check. These are left as-is; "
             "only the 'العاقر'->'العقار' typo (10 occurrences) was corrected "
-            "because it was verified visually against the PDF page image."
+            "because it was verified visually against the PDF page image.")
         ],
     }
 
