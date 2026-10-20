@@ -52,8 +52,8 @@ stages:
       size: 1319
     - path: src/legalrag/embeddings.py
       hash: md5
-      md5: 0e5c213f53054fdd42d4e35f64825525
-      size: 2921
+      md5: 20a21f147cb56974e4ab49ef34d74475
+      size: 4303
     params:
       params.yaml:
         index.chunk_size: 0
@@ -61,6 +61,6 @@ stages:
     outs:
     - path: data/chroma_index
       hash: md5
-      md5: db775e43a0116d69014f7b6fa3b7eb0a.dir
-      size: 9058840
+      md5: 2306dfad9724882a32b4c583efc24859.dir
+      size: 9042456
       nfiles: 6
