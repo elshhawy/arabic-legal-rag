@@ -23,6 +23,7 @@ dev = [
     "dvc[gdrive]>=3.67,<4",
     "pyOpenSSL==24.2.1",
     "cryptography>=42,<44",
+    "mlflow",
 ]
 
 [build-system]
