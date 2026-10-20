@@ -29,6 +29,10 @@ EMBEDDING_DIM = 384  # this model's fixed output size, used later by the vector 
 QUERY_PREFIX = "query: "
 PASSAGE_PREFIX = "passage: "
 
+# How many chunks to fetch per article we want back. Fetching more than k
+# chunks lets us merge chunks of the same article and still return k articles.
+OVERFETCH = 4
+
 _model = None  # loaded once per process, on first use
 
 
@@ -53,17 +57,49 @@ def embed_query(text):
     return model.encode(prefixed, normalize_embeddings=True)
 
 
+def merge_chunks_by_article(chunks, k):
+    """Merge chunks of the same article; return at most k articles, best first.
+
+    `chunks` must be sorted best-first (as Chroma returns them). Chunks of one
+    article are joined in reading order (chunk_index). With overlapping chunks
+    the overlapped words appear twice in the joined text.
+    """
+    by_article = {}
+    for chunk in chunks:
+        by_article.setdefault(chunk["metadata"]["article_number"], []).append(chunk)
+
+    merged = []
+    for group in by_article.values():  # dicts keep insertion (= best-first) order
+        group.sort(key=lambda c: c["metadata"].get("chunk_index", 0))
+        merged.append(
+            {
+                "metadata": group[0]["metadata"],
+                "text": "\n".join(c["text"] for c in group),
+                "distance": min(c["distance"] for c in group),
+            }
+        )
+    return merged[:k]
+
+
 def search(collection, question, k=3):
     """Find the k articles closest in meaning to the question."""
     vector = embed_query(question)
-    results = collection.query(query_embeddings=[vector.tolist()], n_results=k)
-    return [
+    results = collection.query(
+        query_embeddings=[vector.tolist()], n_results=k * OVERFETCH
+    )
+    chunks = [
         {"metadata": meta, "text": doc, "distance": dist}
         for meta, doc, dist in zip(
             results["metadatas"][0], results["documents"][0], results["distances"][0]
         )
     ]
+    return merge_chunks_by_article(chunks, k)
 
+
+def count_articles(collection):
+    """Number of distinct articles in the index (not the number of chunks)."""
+    metadatas = collection.get(include=["metadatas"])["metadatas"]
+    return len({m["article_number"] for m in metadatas})
 
 
 def token_offsets(text):
