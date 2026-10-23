@@ -1,0 +1,66 @@
+schema: '2.0'
+stages:
+  extract:
+    cmd: python -m legalrag.extract
+    deps:
+    - path: data/egyptian_civil_code.pdf
+      hash: md5
+      md5: 5086ef5f16f15d856278db943e58e948
+      size: 2599703
+    - path: src/legalrag/arabic.py
+      hash: md5
+      md5: 77d393f2e093be8974969fe4f25c95af
+      size: 1652
+    - path: src/legalrag/extract.py
+      hash: md5
+      md5: ec312548d57662a7112fa77f7e649933
+      size: 16893
+    outs:
+    - path: data/processed/civil_code.json
+      hash: md5
+      md5: c33afd5d10f67a529ec1ee51fbde3b2a
+      size: 1366941
+    - path: reports/extraction_report.json
+      hash: md5
+      md5: 20a77cad6b37238c3a9ebeef92203631
+      size: 1043
+  validate:
+    cmd: python -m legalrag.validate
+    deps:
+    - path: data/processed/civil_code.json
+      hash: md5
+      md5: c33afd5d10f67a529ec1ee51fbde3b2a
+      size: 1366941
+    - path: src/legalrag/validate.py
+      hash: md5
+      md5: abd2cacb3feeaca21eca5b68f09ecf46
+      size: 5036
+  index:
+    cmd: python scripts/build_index.py
+    deps:
+    - path: data/processed/civil_code.json
+      hash: md5
+      md5: c33afd5d10f67a529ec1ee51fbde3b2a
+      size: 1366941
+    - path: scripts/build_index.py
+      hash: md5
+      md5: f7e8b49474b633f4b757b63863bcc7ba
+      size: 3726
+    - path: src/legalrag/chunking.py
+      hash: md5
+      md5: 336cdb6e7e0020f648df8f26ccef34bf
+      size: 1319
+    - path: src/legalrag/embeddings.py
+      hash: md5
+      md5: 20a21f147cb56974e4ab49ef34d74475
+      size: 4303
+    params:
+      params.yaml:
+        index.chunk_size: 0
+        index.overlap: 0
+    outs:
+    - path: data/chroma_index
+      hash: md5
+      md5: 2306dfad9724882a32b4c583efc24859.dir
+      size: 9042456
+      nfiles: 6

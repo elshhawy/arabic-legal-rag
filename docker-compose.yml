@@ -1,6 +1,7 @@
 services:
   api:
-    build: .
+    # Published by CI to GitHub Container Registry on every merge to main.
+    image: ghcr.io/elshhawy/arabic-legal-rag:latest
     ports:
       - "8000:8000"
     # Secrets are injected at RUN time from the local .env file.

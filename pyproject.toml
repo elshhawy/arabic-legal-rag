@@ -12,10 +12,27 @@ dependencies = [
     "requests",
     "google-genai",
     "python-dotenv",
+    "pyyaml",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "ruff"]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "dvc[gdrive]>=3.67,<4",
+    "pyOpenSSL==24.2.1",
+    "cryptography>=42,<44",
+    "mlflow",
+]
+# Faithfulness scoring (scripts/faithfulness_scoring.py). Kept out of the
+# runtime dependencies so the Docker image stays small.
+eval = [
+    "ragas==0.4.3",
+    # import ragas fails with langchain-community 0.4.2 (verified locally).
+    "langchain-community>=0.4,<0.4.2",
+    "openai>=1.0",
+]
 
 [build-system]
 requires = ["setuptools>=68"]

@@ -3,8 +3,12 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
-data/
+data/chroma_index/
 spot_check_report.txt
 repomix-output.xml
 .venv/
 .env
+
+mlflow.db
+mlruns/
+.cache/
