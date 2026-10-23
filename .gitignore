@@ -11,3 +11,4 @@ repomix-output.xml
 
 mlflow.db
 mlruns/
+.cache/

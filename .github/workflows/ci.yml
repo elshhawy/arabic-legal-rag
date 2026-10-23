@@ -1,0 +1,87 @@
+name: ci
+
+on:
+  push:
+    branches: [main, "session-*"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # No secrets, no data: lint plus the unit tests that need neither the index
+  # nor the embedding model (the API tests skip themselves without the index).
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install (CPU-only torch, like the Dockerfile)
+        run: pip install -e ".[dev]" --extra-index-url https://download.pytorch.org/whl/cpu
+      - run: ruff check src tests
+      - run: pytest -q
+
+  # Needs the DVC data (Google Drive service account) and a Gemini key.
+  # Switched on by the repository variable ENABLE_DATA_JOBS=true, so the first
+  # pull request is green before those secrets exist.
+  data-gate-image:
+    needs: lint-and-test
+    if: vars.ENABLE_DATA_JOBS == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+      GDRIVE_CREDENTIALS_DATA: ${{ secrets.GDRIVE_CREDENTIALS_DATA }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install (CPU-only torch, eval extra for RAGAS)
+        run: pip install -e ".[dev,eval]" --extra-index-url https://download.pytorch.org/whl/cpu
+      - name: Pull data and index from the DVC remote
+        run: |
+          dvc remote modify gdrive gdrive_use_service_account true --local
+          dvc pull
+          dvc status
+      - name: Tests with the real index (API tests no longer skip)
+        run: pytest -q
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-multilingual-e5-small
+      - name: Faithfulness gate (fails below 0.75)
+        run: python scripts/faithfulness_gate.py
+      - name: Build the image and smoke-test /health
+        run: |
+          docker build -t legalrag:ci .
+          docker run -d --name rag -p 8000:8000 \
+            -e GEMINI_API_KEY=unused -e GEMINI_MODEL=unused legalrag:ci
+          for i in $(seq 1 30); do
+            curl -fs localhost:8000/health && break
+            sleep 5
+          done
+          curl -fs localhost:8000/health
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push the image (main only, after the gate passed)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker tag legalrag:ci ghcr.io/${{ github.repository }}:latest
+          docker tag legalrag:ci ghcr.io/${{ github.repository }}:${{ github.sha }}
+          docker push --all-tags ghcr.io/${{ github.repository }}

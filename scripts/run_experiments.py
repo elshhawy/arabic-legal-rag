@@ -2,7 +2,7 @@
 
 Each run builds a throwaway in-memory index (the DVC-tracked data/chroma_index
 is never touched), scores retrieval on the eval set, and logs params + metrics.
-No LLM is called here: faithfulness is added in a separate step.
+Faithfulness (RAGAS, Gemini judge) is scored by faithfulness_scoring.py.
 
     python scripts/run_experiments.py
 """
@@ -16,6 +16,7 @@ from pathlib import Path
 import chromadb
 import mlflow
 from build_index import ADD_BATCH_SIZE, build_chunks
+from faithfulness_scoring import model_names, score_faithfulness
 
 from legalrag.embeddings import MODEL_NAME, embed_passages, search
 
@@ -92,6 +93,9 @@ def main():
         "corpus_md5": md5_of(CORPUS),
         "eval_set_md5": md5_of(EVAL_SET),
     }
+    generation_model, judge_model = model_names()
+    common["generation_model"] = generation_model
+    common["judge_model"] = judge_model
 
     for run_name, chunk_size, overlap in CONFIGS:
         with mlflow.start_run(run_name=run_name):
@@ -103,13 +107,21 @@ def main():
             metrics, details = evaluate(collection, rows)
             metrics["n_chunks"] = len(chunks)
             metrics["index_build_seconds"] = build_seconds
+            faith_metrics, faith_details = score_faithfulness(collection, rows, K)
+            metrics.update(faith_metrics)
             mlflow.log_metrics(metrics)
             mlflow.log_dict({"questions": details}, "retrieval_details.json")
+            mlflow.log_dict(
+                {"questions": faith_details}, "faithfulness_details.json"
+            )
             print(
                 f"{run_name}: chunks={len(chunks)} build={build_seconds}s "
                 f"hit@1 all={metrics['hit_at_1_all']:.2f} "
                 f"hit@{K} all={metrics[f'hit_at_{K}_all']:.2f} "
-                f"ar={metrics[f'hit_at_{K}_ar']:.2f} en={metrics[f'hit_at_{K}_en']:.2f}"
+                f"ar={metrics[f'hit_at_{K}_ar']:.2f} en={metrics[f'hit_at_{K}_en']:.2f} "
+                f"faithfulness={metrics.get('faithfulness', float('nan')):.2f} "
+                f"({metrics['faithfulness_n_scored']}/{metrics['faithfulness_n_questions']} scored) "
+                f"refusal_rate={metrics['refusal_rate']:.2f}"
             )
 
 
